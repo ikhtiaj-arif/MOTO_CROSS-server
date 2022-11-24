@@ -28,7 +28,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try{
         const usersCollection = client.db('motocross').collection('users')
-
+        const categoriesCollection = client.db('motocross').collection('categories')
+        const allBikesCollection = client.db('motocross').collection('allBikes')
 // set or update user to database  
         app.put('/users/:email', async(req, res)=>{
             const user = req.body;
@@ -44,6 +45,29 @@ async function run() {
 
             res.send({user, token})
         })
+
+
+// All categories
+        app.get('/categories', async(req, res) => {
+            const query = {};
+            const result = await categoriesCollection.find(query).toArray();
+            res.send(result)
+        })
+
+// filter bikes by category name
+        app.get('/categories/:title', async(req, res)=>{
+            const title = req.params.title;
+            console.log(title);
+            const filter = { title: title };
+            const result = await allBikesCollection.find(filter).toArray();
+            res.send(result)
+        })
+
+
+
+
+
+
 
     }
     finally{
