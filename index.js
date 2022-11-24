@@ -19,6 +19,21 @@ app.get('/', (req, res) => {
     res.send('Server is running...')
 })
 
+// verify user with JWT
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).send('Unauthorized Access!')
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(401).send('Unauthorized Access!')
+        }
+        req.decoded = decoded;
+        next()
+    })
+}
 
 
 
@@ -30,6 +45,8 @@ async function run() {
         const usersCollection = client.db('motocross').collection('users')
         const categoriesCollection = client.db('motocross').collection('categories')
         const allBikesCollection = client.db('motocross').collection('allBikes')
+        const bookingsCollection = client.db('motocross').collection('bookings')
+
 // set or update user to database  
         app.put('/users/:email', async(req, res)=>{
             const user = req.body;
@@ -44,6 +61,32 @@ async function run() {
             const token = jwt.sign(user, process.env.TOKEN_SECRET, {expiresIn: '1d'});
 
             res.send({user, token})
+        })
+// get all users
+        app.get('/users', async(req, res)=> {
+            const query = {};
+            const result = await usersCollection.find(query).toArray();
+            res.send(result)
+        })
+
+// set seller role to user
+        app.put('/users/seller/:id', verifyJWT, async(req, res) => {
+
+            const decodedEmail = req.decoded.email;
+            const query = { email : decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if(user?.role !== 'admin'){
+                return res.status(403).send('Forbidden Access!')
+            }
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const option = { upsert: true };
+            const updatedDoc = {
+                $set: { role: 'seller'}
+            }
+            const result =await usersCollection.updateOne(filter, updatedDoc, option)
+            res.send(result)
+
         })
 
 
@@ -73,6 +116,25 @@ async function run() {
 
         })
 
+// get bookings with user email
+        app.get('/bookings',verifyJWT, async(req, res) => {
+           
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if(email !== decodedEmail) {
+                return res.status(403).send('Forbidden!')
+            }
+            const query = { email: email }
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result)
+        })
+// post bookings with user info
+        app.post('/bookings', async(req, res) => {
+            const product = req.body;
+            const result = await bookingsCollection.insertOne(product);
+            res.send(result)
+
+        })
 
 
 
