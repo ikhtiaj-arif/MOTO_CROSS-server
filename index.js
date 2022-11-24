@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken')
 
 const app = express()
@@ -61,6 +61,16 @@ async function run() {
             const filter = { title: title };
             const result = await allBikesCollection.find(filter).toArray();
             res.send(result)
+        })
+
+//find one bike 
+        app.get('/bike/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id)}
+            const result = await allBikesCollection.findOne(query)
+            res.send(result)
+
+
         })
 
 
