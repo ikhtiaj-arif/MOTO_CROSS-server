@@ -75,6 +75,13 @@ async function run() {
             const user = await usersCollection.findOne(query);
             res.send(user)
         })
+//get user by role
+        app.get('/seller', async(req, res)=>{
+            const filter = {role: "seller"}
+            const result = await usersCollection.find(filter).toArray();
+            // console.log(result);
+            res.send(result)
+        })
 
 // set seller role to user
         app.put('/users/seller/:id', verifyJWT, async(req, res) => {
@@ -121,6 +128,12 @@ async function run() {
             res.send(result)
 
 
+        })
+// post bikes
+        app.post('/bike', async(req, res)=>{
+            const bike = req.body;
+            const result = await allBikesCollection.insertOne(bike);
+            res.send(result)
         })
 
 // get bookings with user email
