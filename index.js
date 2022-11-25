@@ -54,7 +54,7 @@ async function run() {
             const filter = { email: email };
             const option = { upsert: true};
             const updatedDoc = {
-                $set: { user }
+                $set: user 
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, option);
 
@@ -67,6 +67,13 @@ async function run() {
             const query = {};
             const result = await usersCollection.find(query).toArray();
             res.send(result)
+        })
+// get user by email
+        app.get('/users/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = { email: email};
+            const user = await usersCollection.findOne(query);
+            res.send(user)
         })
 
 // set seller role to user
