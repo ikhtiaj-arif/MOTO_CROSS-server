@@ -93,10 +93,11 @@ async function run() {
                 return res.status(403).send('Forbidden Access!')
             }
             const id = req.params.id;
+            const role = req.body;
             const filter = { _id: ObjectId(id) };
             const option = { upsert: true };
             const updatedDoc = {
-                $set: { role: 'seller'}
+                $set: role
             }
             const result =await usersCollection.updateOne(filter, updatedDoc, option)
             res.send(result)
@@ -129,10 +130,20 @@ async function run() {
 
 
         })
+// find bikes by seller email
+        app.get('/bikes', async(req, res)=> {
+            const email = req.query.email;
+            const query = {email: email};
+            const result = await allBikesCollection.find(query).toArray();
+            res.send(result)
+        })
+
+
 // post bikes
         app.post('/bike', async(req, res)=>{
-            const bike = req.body;
-            const result = await allBikesCollection.insertOne(bike);
+            const product = req.body;
+            console.log(req.body);
+            const result = await allBikesCollection.insertOne(product);
             res.send(result)
         })
 
