@@ -46,6 +46,7 @@ async function run() {
         const categoriesCollection = client.db('motocross').collection('categories')
         const allBikesCollection = client.db('motocross').collection('allBikes')
         const bookingsCollection = client.db('motocross').collection('bookings')
+        const reportsCollection = client.db('motocross').collection('reports')
 
 // set or update user to database  
         app.put('/users/:email', async(req, res)=>{
@@ -103,7 +104,13 @@ async function run() {
             res.send(result)
 
         })
-
+// delete seller
+        app.delete('/user/:id', async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id : ObjectId(id)}
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
 
 // All categories
         app.get('/categories', async(req, res) => {
@@ -137,14 +144,70 @@ async function run() {
             const result = await allBikesCollection.find(query).toArray();
             res.send(result)
         })
-
-
 // post bikes
         app.post('/bike', async(req, res)=>{
             const product = req.body;
             console.log(req.body);
             const result = await allBikesCollection.insertOne(product);
             res.send(result)
+        })
+
+// delete bike
+        app.delete('/bike/:id', async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id : ObjectId(id)}
+            const result = await allBikesCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+// find bikes by advertisement 
+        app.get('/advertiseBike', async(req, res)=> {
+            
+            const query = {isAdvertised: 'advertise'};
+            const result = await allBikesCollection.find(query).toArray();
+            res.send(result)
+        })
+
+
+// get reports
+        app.get('/reports', async(req, res)=>{
+            const query = {}
+            const result = await reportsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
+//post report 
+
+    app.post('/reports', async(req, res)=>{
+        const report = req.body;
+        const result = await reportsCollection.insertOne(report)
+        res.send(result)
+
+    }) 
+
+// delete repoert
+        app.delete('/reports/:id', async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id : ObjectId(id)}
+            const result = await reportsCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+
+// update advertise to bike
+        app.put('/bike/:id', async(req, res)=>{
+            const id = req.params.id;
+            const data = req.body;
+            const filter = { _id: ObjectId(id) };
+            const option = { upsert: true };
+            const updatedDoc = {
+                $set: data
+            }
+            const result =await allBikesCollection.updateOne(filter, updatedDoc, option)
+            res.send(result) 
         })
 
 // get bookings with user email
