@@ -68,21 +68,27 @@ async function run() {
             res.send({user, token})
         })
 // get all users
-        app.get('/users', async(req, res)=> {
-            const query = {};
+        app.get('/users', verifyJWT, async(req, res)=> {
+            const query = {role: null};
             const result = await usersCollection.find(query).toArray();
             res.send(result)
         })
 // get user by email
-        app.get('/users/:email', async(req, res) => {
+        app.get('/users/:email', verifyJWT, async(req, res) => {
             const email = req.params.email;
             const query = { email: email};
             const user = await usersCollection.findOne(query);
             res.send(user)
         })
 //get user by role
-        app.get('/seller', async(req, res)=>{
+        app.get('/seller', verifyJWT, async(req, res)=>{
             const filter = {role: "seller"}
+            const result = await usersCollection.find(filter).toArray();
+            // console.log(result);
+            res.send(result)
+        })
+        app.get('/sellerRequested', verifyJWT, async(req, res)=>{
+            const filter = {role: "sellerRequest"}
             const result = await usersCollection.find(filter).toArray();
             // console.log(result);
             res.send(result)
@@ -109,7 +115,14 @@ async function run() {
 
         })
 // delete seller
-        app.delete('/user/:id', async(req, res)=>{
+        app.delete('/user/:id', verifyJWT, async(req, res)=>{
+            const decodedEmail = req.decoded.email;
+            const query = { email : decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if(user?.role !== 'admin'){
+                return res.status(403).send('Forbidden Access!')
+            }
+
             const id = req.params.id;
             const filter = { _id : ObjectId(id)}
             const result = await usersCollection.deleteOne(filter)
@@ -123,11 +136,15 @@ async function run() {
             res.send(result)
         })
 
-// filter bikes by category name
+// filter bikes by category name & available
         app.get('/categories/:title', async(req, res)=>{
             const title = req.params.title;
             console.log(title);
-            const filter = { title: title };
+            // const filter = { title: title };
+            const filter = {
+                title: title ,
+                 status: 'available' 
+                };
             const result = await allBikesCollection.find(filter).toArray();
             res.send(result)
         })
@@ -142,14 +159,14 @@ async function run() {
 
         })
 // find bikes by seller email
-        app.get('/bikes', async(req, res)=> {
+        app.get('/bikes', verifyJWT, async(req, res)=> {
             const email = req.query.email;
             const query = {email: email};
             const result = await allBikesCollection.find(query).toArray();
             res.send(result)
         })
 // post bikes
-        app.post('/bike', async(req, res)=>{
+        app.post('/bike', verifyJWT, async(req, res)=>{
             const product = req.body;
             console.log(req.body);
             const result = await allBikesCollection.insertOne(product);
@@ -157,7 +174,7 @@ async function run() {
         })
 
 // delete bike
-        app.delete('/bike/:id', async(req, res)=>{
+        app.delete('/bike/:id', verifyJWT, async(req, res)=>{
             const id = req.params.id;
             const filter = { _id : ObjectId(id)}
             const result = await allBikesCollection.deleteOne(filter)
@@ -173,9 +190,23 @@ async function run() {
             res.send(result)
         })
 
+        
+// update advertise to bike
+        app.put('/bike/:id', verifyJWT, async(req, res)=>{
+            const id = req.params.id;
+            const data = req.body;
+            const filter = { _id: ObjectId(id), status: "available" };
+            const option = { upsert: true };
+            const updatedDoc = {
+                $set: data
+            }
+            const result =await allBikesCollection.updateOne(filter, updatedDoc, option)
+            res.send(result) 
+        })
+
 
 // get reports
-        app.get('/reports', async(req, res)=>{
+        app.get('/reports', verifyJWT, async(req, res)=>{
             const query = {}
             const result = await reportsCollection.find(query).toArray()
             res.send(result)
@@ -184,7 +215,7 @@ async function run() {
 
 //post report 
 
-    app.post('/reports', async(req, res)=>{
+    app.post('/reports', verifyJWT, async(req, res)=>{
         const report = req.body;
         const result = await reportsCollection.insertOne(report)
         res.send(result)
@@ -192,7 +223,13 @@ async function run() {
     }) 
 
 // delete repoert
-        app.delete('/reports/:id', async(req, res)=>{
+        app.delete('/reports/:id', verifyJWT, async(req, res)=>{
+            const decodedEmail = req.decoded.email;
+            const query = { email : decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if(user?.role !== 'admin'){
+                return res.status(403).send('Forbidden Access!')
+            }
             const id = req.params.id;
             const filter = { _id : ObjectId(id)}
             const result = await reportsCollection.deleteOne(filter)
@@ -201,18 +238,6 @@ async function run() {
 
 
 
-// update advertise to bike
-        app.put('/bike/:id', async(req, res)=>{
-            const id = req.params.id;
-            const data = req.body;
-            const filter = { _id: ObjectId(id) };
-            const option = { upsert: true };
-            const updatedDoc = {
-                $set: data
-            }
-            const result =await allBikesCollection.updateOne(filter, updatedDoc, option)
-            res.send(result) 
-        })
 
 // get bookings with user email
         app.get('/bookings',verifyJWT, async(req, res) => {
@@ -227,7 +252,7 @@ async function run() {
             res.send(result)
         })
 // get booking with id
-        app.get('/bookings/:id', async(req, res)=>{
+        app.get('/bookings/:id', verifyJWT, async(req, res)=>{
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await bookingsCollection.findOne(query)
@@ -236,36 +261,43 @@ async function run() {
 
 
 // post bookings with user info
-        app.post('/bookings', async(req, res) => {
+        app.post('/bookings', verifyJWT, async(req, res) => {
             const product = req.body;
             const result = await bookingsCollection.insertOne(product);
             res.send(result)
 
         })
 
+// delete booking
+        app.delete('/bookings/:id', verifyJWT, async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await bookingsCollection.deleteOne(query);
+            res.send(result)
+        })
+
 
 // payment intent
-app.post('/create-payment-intent', async(req, res)=>{
-    const booking = req.body;
-    const price = booking.price;
-    const amount = price * 100;
-  
-   
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
-        currency: "usd",
-       
-          "payment_method_types": [
-            "card"
-          ]
-        
-      });
-      res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
-})
+        app.post('/create-payment-intent', verifyJWT, async(req, res)=>{
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+            
+                "payment_method_types": [
+                    "card"
+                ]
+                
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        })
 // payments data
-        app.post('/payments', async(req, res)=>{
+        app.post('/payments', verifyJWT, async(req, res)=>{
             const payment = req.body;
             const result = await paymentsCollection.insertOne(payment)
 
