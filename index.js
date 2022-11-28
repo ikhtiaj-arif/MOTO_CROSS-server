@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 function verifyJWT(req, res, next){
     const authHeader = req.headers.authorization;
     if(!authHeader){
-        return res.status(401).send('Unauthorized Access!')
+        return res.status(401).send('unauthorized Access!')
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.TOKEN_SECRET, function(err, decoded){
@@ -49,6 +49,7 @@ async function run() {
         const bookingsCollection = client.db('motocross').collection('bookings')
         const reportsCollection = client.db('motocross').collection('reports')
         const paymentsCollection = client.db('motocross').collection('payments')
+        const blogsCollection = client.db('motocross').collection('blogs')
 
 
 
@@ -110,6 +111,7 @@ async function run() {
             const updatedDoc = {
                 $set: role
             }
+            
             const result =await usersCollection.updateOne(filter, updatedDoc, option)
             res.send(result)
 
@@ -258,6 +260,13 @@ async function run() {
             const result = await bookingsCollection.findOne(query)
             res.send(result)
         })
+// blogs
+        app.get('/blogs',  async(req, res)=>{
+            const query = {};
+            const result = await blogsCollection.find(query).toArray()
+            res.send(result)
+        })
+        
 
 
 // post bookings with user info
