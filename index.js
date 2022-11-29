@@ -82,7 +82,7 @@ async function run() {
             res.send(user)
         })
 //get user by role
-        app.get('/seller', verifyJWT, async(req, res)=>{
+        app.get('/seller',  async(req, res)=>{
             const filter = {role: "seller"}
             const result = await usersCollection.find(filter).toArray();
             // console.log(result);
