@@ -324,7 +324,8 @@ async function run() {
             }
             const productUpdateDoc = {
                 $set: {
-                    status: 'sold'
+                    status: 'sold',
+                    isAdvertised: null
                 }
             }
             const updatedBooking = await bookingsCollection.updateOne(bookingFilter, bookingUpdateDoc);
