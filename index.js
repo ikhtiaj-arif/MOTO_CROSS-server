@@ -183,7 +183,6 @@ async function run() {
             const updatedDoc = {
                 $set: update 
             } 
-            console.log('filter:',filter,'update:',update,'updoc:',updatedDoc);
             const result = await allBikesCollection.updateMany(filter, updatedDoc, option);
             console.log(result);
             res.send(result)
