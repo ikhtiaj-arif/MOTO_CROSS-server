@@ -141,7 +141,12 @@ async function run() {
 // filter bikes by category name & available
         app.get('/categories/:title', async(req, res)=>{
             const title = req.params.title;
-            console.log(title);
+            if(title === "ALLBIKES"){
+                const filter = {status: 'available'}
+                const result = await allBikesCollection.find(filter).toArray();
+                res.send(result);
+                return
+            }
             // const filter = { title: title };
             const filter = {
                 title: title ,
@@ -167,6 +172,23 @@ async function run() {
             const result = await allBikesCollection.find(query).toArray();
             res.send(result)
         })
+
+// update bike by email
+        app.put('/bikes', async(req, res)=> {
+            const email = req.query.email;
+
+            const filter ={ email: email }
+            const update = req.body;
+            const option = { upsert: true }
+            const updatedDoc = {
+                $set: update 
+            } 
+            console.log('filter:',filter,'update:',update,'updoc:',updatedDoc);
+            const result = await allBikesCollection.updateMany(filter, updatedDoc, option);
+            console.log(result);
+            res.send(result)
+        })
+
 // post bikes
         app.post('/bike', verifyJWT, async(req, res)=>{
             const product = req.body;
